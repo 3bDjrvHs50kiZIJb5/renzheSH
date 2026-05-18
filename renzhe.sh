@@ -1,5 +1,5 @@
 #!/bin/bash
-sh_v="4.4.10"
+sh_v="4.4.10-5-d8babe9"
 
 
 gl_hui='\e[37m'
@@ -22214,7 +22214,7 @@ while true; do
 	echo "更新日志"
 	echo "------------------------"
 	# 只下载前5行获取版本号，避免下载整个脚本
-	local sh_v_new=$(curl -s --max-time 15 -r 0-200 ${gh_proxy}raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
+	local sh_v_new=$(curl -s --max-time 15 -r 0-200 ${gh_proxy}raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh | grep -o 'sh_v="[^"]*"' | head -1 | cut -d '"' -f 2)
 
 	if [ -z "$sh_v_new" ]; then
 		echo -e "${gl_hong}无法获取最新版本信息，请检查网络连接${gl_bai}"
@@ -22339,7 +22339,7 @@ while true; do
 clear
 echo -e "${gl_kjlan}忍者${gl_bai}"
 echo -e "${gl_kjlan}RENZHE.SH${gl_bai}"
-echo -e "忍者 根菜单 V$(date '+%m.%d.%Y %H')"
+echo -e "忍者 根菜单 V$sh_v"
 echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动忍者根菜单，并自动更新脚本和系统${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统更新"
@@ -22383,7 +22383,7 @@ echo -e "${gl_kjlan}"
 echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
 echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
 echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
-echo -e "忍者工具箱旧菜单 v$sh_v"
+echo -e "忍者工具箱旧菜单 V$sh_v"
 echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动旧菜单，并自动更新脚本和系统${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统信息查询"
