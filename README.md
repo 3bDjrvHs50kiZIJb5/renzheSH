@@ -57,7 +57,7 @@
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh)
 ```
-安装后可直接输入 `r` 或 `R` 启动。
+安装后可直接输入 `r` 启动，输入 `R` 直接进入系统更新。
 
 
 <br><br>

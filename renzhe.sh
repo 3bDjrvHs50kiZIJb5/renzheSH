@@ -113,7 +113,7 @@ UserLicenseAgreement() {
 	clear
 	echo -e "${gl_kjlan}欢迎使用忍者工具箱${gl_bai}"
 	echo "首次使用脚本，请先阅读并同意用户许可协议。"
-	echo "用户许可协议: https://github.com/cenet999/sh/blob/main/LICENSE"
+	echo "用户许可协议: https://github.com/3bDjrvHs50kiZIJb5/renzheSH/blob/main/LICENSE"
 	echo -e "----------------------"
 	read -e -p "是否同意以上条款？(y/n): " user_input
 
@@ -4828,6 +4828,14 @@ linux_update() {
 		echo "未知的包管理器!"
 		return
 	fi
+}
+
+
+kejilion_system_update_auto() {
+	clear
+	send_stats "系统更新"
+	kejilion_auto_update
+	linux_update
 }
 
 
@@ -10635,7 +10643,7 @@ else:
         print(line)
     print('ℹ️ 无需同步：配置已与上游 /models 保持一致')
 PY
-	}
+}
 
 
 
@@ -22331,8 +22339,8 @@ while true; do
 clear
 echo -e "${gl_kjlan}忍者${gl_bai}"
 echo -e "${gl_kjlan}RENZHE.SH${gl_bai}"
-echo -e "忍者 根菜单 v$sh_v"
-echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动忍者根菜单${gl_bai}"
+echo -e "忍者 根菜单 V$(date '+%m.%d.%Y %H')"
+echo -e "命令行输入${gl_huang}r${gl_kjlan}可快速启动忍者根菜单，${gl_huang}R${gl_kjlan}可直接进入系统更新${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统更新"
 echo -e "${gl_kjlan}2.   ${gl_bai}Nginx静态应用站"
@@ -22348,7 +22356,7 @@ echo -e "${gl_kjlan}------------------------${gl_bai}"
 read -e -p "请输入你的选择: " choice
 
 case $choice in
-  1) clear ; send_stats "系统更新" ; kejilion_auto_update ; linux_update ;;
+  1) kejilion_system_update_auto ;;
   2) linux_panel 118 ;;
   3) ldnmp_Proxy ;;
   4) ldnmp_Proxy "" "" "" "no_ssl" ;;
@@ -22376,7 +22384,7 @@ echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
 echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
 echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "忍者工具箱旧菜单 v$sh_v"
-echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动旧菜单${gl_bai}"
+echo -e "命令行输入${gl_huang}r${gl_kjlan}可快速启动旧菜单，${gl_huang}R${gl_kjlan}可直接进入系统更新${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统信息查询"
 echo -e "${gl_kjlan}2.   ${gl_bai}系统更新"
@@ -22510,9 +22518,73 @@ PY
 }
 
 
-codex_cli_install_or_upgrade() {
+install_nodejs_and_npm() {
+	if command -v npm >/dev/null 2>&1 && (command -v node >/dev/null 2>&1 || command -v nodejs >/dev/null 2>&1); then
+		return 0
+	fi
+
+	echo "未找到 Node.js / npm，正在自动安装..."
+
+	if command -v dnf >/dev/null 2>&1; then
+		if [ "$EUID" -eq 0 ]; then
+			curl -fsSL https://rpm.nodesource.com/setup_24.x | bash -
+		elif command -v sudo >/dev/null 2>&1; then
+			curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
+		else
+			echo "安装 Node.js 需要 root 权限或 sudo。"
+			return 1
+		fi
+		dnf install -y nodejs npm
+	elif command -v yum >/dev/null 2>&1; then
+		if [ "$EUID" -eq 0 ]; then
+			curl -fsSL https://rpm.nodesource.com/setup_24.x | bash -
+		elif command -v sudo >/dev/null 2>&1; then
+			curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
+		else
+			echo "安装 Node.js 需要 root 权限或 sudo。"
+			return 1
+		fi
+		yum install -y nodejs npm
+	elif command -v apt >/dev/null 2>&1; then
+		if [ "$EUID" -eq 0 ]; then
+			curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+		elif command -v sudo >/dev/null 2>&1; then
+			curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
+		else
+			echo "安装 Node.js 需要 root 权限或 sudo。"
+			return 1
+		fi
+		apt update -y
+		apt install -y nodejs npm
+	elif command -v apk >/dev/null 2>&1; then
+		apk update
+		apk add nodejs npm
+	elif command -v pacman >/dev/null 2>&1; then
+		pacman -Syu --noconfirm
+		pacman -S --noconfirm nodejs npm
+	elif command -v zypper >/dev/null 2>&1; then
+		zypper refresh
+		zypper install -y nodejs npm
+	else
+		echo "未找到可用的包管理器，无法自动安装 Node.js / npm。"
+		return 1
+	fi
+
 	if ! command -v npm >/dev/null 2>&1; then
-		echo "未找到 npm，请先安装 Node.js / npm。"
+		echo "Node.js / npm 安装完成后仍未找到 npm。"
+		return 1
+	fi
+
+	if ! command -v node >/dev/null 2>&1 && command -v nodejs >/dev/null 2>&1; then
+		ln -sf "$(command -v nodejs)" /usr/local/bin/node >/dev/null 2>&1
+	fi
+
+	return 0
+}
+
+
+codex_cli_install_or_upgrade() {
+	if ! install_nodejs_and_npm; then
 		return 1
 	fi
 
@@ -22723,7 +22795,8 @@ send_stats "r命令参考用例"
 echo "-------------------"
 echo "视频介绍: https://www.bilibili.com/video/BV1ib421E7it?t=0.1"
 echo "以下是r命令参考用例："
-echo "启动脚本            r / R"
+echo "启动脚本            r"
+echo "系统更新            R"
 echo "安装软件包          r install nano wget | r add nano wget | r 安装 nano wget"
 echo "卸载软件包          r remove nano wget | r del nano wget | r uninstall nano wget | r 卸载 nano wget"
 echo "更新系统            r update | r 更新"
@@ -22779,7 +22852,11 @@ echo "SSH公钥导入(GitHub) r sshkey github <user> "
 
 if [ "$#" -eq 0 ]; then
 	# 如果没有参数，运行交互式逻辑
-	kejilion
+	if [ "$(basename "$0")" = "R" ]; then
+		kejilion_system_update_auto
+	else
+		kejilion
+	fi
 else
 	# 如果有参数，执行相应函数
 	case $1 in
