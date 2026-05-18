@@ -1690,22 +1690,13 @@ add_yuming() {
 
 
 read_batch_yuming() {
-	local prompt="${1:-请输入你的域名（支持空格或换行分隔，输入空行结束）: }"
-	local raw=""
+	local prompt="${1:-请输入你的域名（单行输入，多个域名用空格分隔）: }"
 	local line=""
 
 	read -e -p "$prompt" line
 	[ -z "$line" ] && return 1
-	raw="$line"$'\n'
 
-	if [ -t 0 ]; then
-		while IFS= read -r line; do
-			[ -z "$line" ] && break
-			raw+="${line}"$'\n'
-		done
-	fi
-
-	printf '%s' "$raw"
+	printf '%s' "$line"
 }
 
 
@@ -1878,7 +1869,7 @@ web_del() {
 	local yuming_list=()
 
 	if [ -z "$yuming_input" ]; then
-		yuming_input="$(read_batch_yuming "删除站点数据，请输入你的域名（支持空格或换行分隔，输入空行结束）: ")"
+		yuming_input="$(read_batch_yuming "删除站点数据，请输入你的域名（单行输入，多个域名用空格分隔）: ")"
 		[ -z "$yuming_input" ] && return
 	fi
 
@@ -7051,6 +7042,7 @@ kj_ssh_read_auth() {
 			;;
 		2)
 			echo "请粘贴密钥内容 (粘贴完成后按两次回车)："
+			password_or_key=""
 			while IFS= read -r line; do
 				if [[ -z "$line" && "$password_or_key" == *"-----BEGIN"* ]]; then
 					break
