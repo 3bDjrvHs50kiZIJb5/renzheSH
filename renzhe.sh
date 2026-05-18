@@ -1681,9 +1681,39 @@ fi
 
 
 add_yuming() {
-	  ip_address
-	  echo -e "先将域名解析到本机IP: ${gl_huang}$ipv4_address  $ipv6_address${gl_bai}"
-	  read -e -p "请输入你的IP或者解析过的域名: " yuming
+		  ip_address
+		  echo -e "先将域名解析到本机IP: ${gl_huang}$ipv4_address  $ipv6_address${gl_bai}"
+		  read -e -p "请输入你的IP或者解析过的域名: " yuming
+}
+
+
+read_batch_yuming() {
+	local prompt="${1:-请输入你的域名（支持空格或换行分隔，输入空行结束）: }"
+	local raw=""
+	local line=""
+
+	read -e -p "$prompt" line
+	[ -z "$line" ] && return 1
+	raw="$line"$'\n'
+
+	if [ -t 0 ]; then
+		while IFS= read -r line; do
+			[ -z "$line" ] && break
+			raw+="${line}"$'\n'
+		done
+	fi
+
+	printf '%s' "$raw"
+}
+
+
+normalize_yuming_list() {
+	local raw_input="${1:-}"
+	printf '%s\n' "$raw_input" \
+		| tr ',\r\t' '   ' \
+		| tr ' ' '\n' \
+		| sed -e 's#^https\?://##' -e 's#/.*$##' \
+		| awk 'NF && !seen[$0]++'
 }
 
 
@@ -3592,23 +3622,27 @@ ldnmp_wp() {
 ldnmp_Proxy() {
 	clear
 	webname="反向代理-IP+端口"
-	yuming="${1:-}"
+	local yuming_input="${1:-}"
 	reverseproxy="${2:-}"
 	port="${3:-}"
 	local ssl_mode="${4:-}"
 	local site_name
+	local yuming_list
+	local yuming
 
 	if is_no_ssl_mode "$ssl_mode"; then
 		webname="反向代理-IP+端口+无SSL"
 	fi
 	send_stats "安装$webname"
 	echo "开始部署 $webname"
-	if [ -z "$yuming" ]; then
-		add_yuming
+	if [ -z "$yuming_input" ]; then
+		yuming_input="$(read_batch_yuming)"
 	fi
-	site_name=$(get_domain_storage_name "$yuming")
-
-	check_ip_and_get_access_port "$yuming"
+	mapfile -t yuming_list < <(normalize_yuming_list "$yuming_input")
+	if [ "${#yuming_list[@]}" -eq 0 ]; then
+		echo "未输入域名"
+		return 1
+	fi
 
 	if [ -z "$reverseproxy" ]; then
 		read -e -p "请输入你的反代IP (回车默认本机IP 127.0.0.1): " reverseproxy
@@ -3622,33 +3656,43 @@ ldnmp_Proxy() {
 
 	if ! is_no_ssl_mode "$ssl_mode"; then
 		install_ssltls
-		certs_status
 	fi
 
 	wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/map.conf
-	wget -O "/home/web/conf.d/$site_name.conf" ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/reverse-proxy-backend.conf
-
-	backend=$(tr -dc 'A-Za-z' < /dev/urandom | head -c 8)
-	sed -i "s/backend_yuming_com/backend_$backend/g" "/home/web/conf.d/$site_name.conf"
-
-
-	sed -i "s|/etc/nginx/certs/yuming.com_cert.pem|/etc/nginx/certs/${site_name}_cert.pem|g" "/home/web/conf.d/$site_name.conf"
-	sed -i "s|/etc/nginx/certs/yuming.com_key.pem|/etc/nginx/certs/${site_name}_key.pem|g" "/home/web/conf.d/$site_name.conf"
-	sed -i "s/yuming.com/$yuming/g" "/home/web/conf.d/$site_name.conf"
-
 	reverseproxy_port="$reverseproxy:$port"
-	upstream_servers=""
+	local upstream_servers=""
+	local server
 	for server in $reverseproxy_port; do
 		upstream_servers="$upstream_servers    server $server;\n"
 	done
 
-	sed -i "s/# 动态添加/$upstream_servers/g" "/home/web/conf.d/$site_name.conf"
-	sed -i '/remote_addr/d' "/home/web/conf.d/$site_name.conf"
-	if is_no_ssl_mode "$ssl_mode"; then
-		disable_nginx_site_ssl "/home/web/conf.d/$site_name.conf"
-	fi
+	for yuming in "${yuming_list[@]}"; do
+		site_name=$(get_domain_storage_name "$yuming")
 
-	update_nginx_listen_port "$site_name" "$access_port"
+		check_ip_and_get_access_port "$yuming"
+
+		if ! is_no_ssl_mode "$ssl_mode"; then
+			install_ssltls
+			certs_status
+		fi
+
+		wget -O "/home/web/conf.d/$site_name.conf" ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/reverse-proxy-backend.conf
+
+		backend=$(tr -dc 'A-Za-z' < /dev/urandom | head -c 8)
+		sed -i "s/backend_yuming_com/backend_$backend/g" "/home/web/conf.d/$site_name.conf"
+
+		sed -i "s|/etc/nginx/certs/yuming.com_cert.pem|/etc/nginx/certs/${site_name}_cert.pem|g" "/home/web/conf.d/$site_name.conf"
+		sed -i "s|/etc/nginx/certs/yuming.com_key.pem|/etc/nginx/certs/${site_name}_key.pem|g" "/home/web/conf.d/$site_name.conf"
+		sed -i "s/yuming.com/$yuming/g" "/home/web/conf.d/$site_name.conf"
+
+		sed -i "s/# 动态添加/$upstream_servers/g" "/home/web/conf.d/$site_name.conf"
+		sed -i '/remote_addr/d' "/home/web/conf.d/$site_name.conf"
+		if is_no_ssl_mode "$ssl_mode"; then
+			disable_nginx_site_ssl "/home/web/conf.d/$site_name.conf"
+		fi
+
+		update_nginx_listen_port "$site_name" "$access_port"
+	done
 
 	nginx_http_on
 	if ! docker exec nginx nginx -s reload; then
