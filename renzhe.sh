@@ -97,6 +97,8 @@ sed -i '/^alias r=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./renzhe.sh ~/renzhe.sh > /dev/null 2>&1
 cp -f ~/renzhe.sh /usr/local/bin/r > /dev/null 2>&1
 ln -sf /usr/local/bin/r /usr/bin/r > /dev/null 2>&1
+cp -f ~/renzhe.sh /usr/local/bin/R > /dev/null 2>&1
+ln -sf /usr/local/bin/R /usr/bin/R > /dev/null 2>&1
 
 
 
@@ -21653,7 +21655,7 @@ EOF
 
 		  101)
 			  clear
-			  k_info
+			  r_info
 			  ;;
 
 		  102)
@@ -21669,6 +21671,9 @@ EOF
 				  clear
 				  (crontab -l | grep -v "renzhe.sh") | crontab -
 				  rm -f /usr/local/bin/r
+				  rm -f /usr/local/bin/R
+				  rm -f /usr/bin/r
+				  rm -f /usr/bin/R
 				  rm ~/renzhe.sh
 				  echo "脚本已卸载，再见！"
 				  break_end
@@ -22159,6 +22164,39 @@ games_server_tools() {
 
 
 
+kejilion_auto_update() {
+	cd ~
+	local download_url="${gh_proxy}raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh"
+	local tmp_file=$(mktemp ~/kejilion_tmp.XXXXXX)
+
+	echo -e "${gl_kjlan}正在自动更新脚本...${gl_bai}"
+	cp -f ~/renzhe.sh ~/renzhe.sh.bak 2>/dev/null
+
+	if curl -sS --max-time 60 --fail -o "$tmp_file" "$download_url" && \
+	   [ -s "$tmp_file" ] && \
+	   head -1 "$tmp_file" | grep -q '^#!/bin/bash'; then
+		chmod +x "$tmp_file"
+		mv -f "$tmp_file" ~/renzhe.sh
+		canshu_v6
+		CheckFirstRun_true
+		yinsiyuanquan2
+		cp -f ~/renzhe.sh /usr/local/bin/r > /dev/null 2>&1
+		ln -sf /usr/local/bin/r /usr/bin/r > /dev/null 2>&1
+		cp -f ~/renzhe.sh /usr/local/bin/R > /dev/null 2>&1
+		ln -sf /usr/local/bin/R /usr/bin/R > /dev/null 2>&1
+		echo -e "${gl_lv}脚本自动更新完成${gl_bai}"
+		return 0
+	fi
+
+	rm -f "$tmp_file"
+	if [ -f ~/renzhe.sh.bak ]; then
+		mv -f ~/renzhe.sh.bak ~/renzhe.sh
+	fi
+	echo -e "${gl_hong}脚本自动更新失败，已恢复原版本${gl_bai}"
+	return 1
+}
+
+
 kejilion_update() {
 
 send_stats "脚本更新"
@@ -22167,12 +22205,8 @@ while true; do
 	clear
 	echo "更新日志"
 	echo "------------------------"
-	echo "全部日志: ${gh_proxy}raw.githubusercontent.com/cenet999/sh/main/kejilion_sh_log.txt"
-	echo "------------------------"
-
-	curl -s --max-time 15 ${gh_proxy}raw.githubusercontent.com/cenet999/sh/main/kejilion_sh_log.txt | tail -n 30
 	# 只下载前5行获取版本号，避免下载整个脚本
-	local sh_v_new=$(curl -s --max-time 15 -r 0-200 ${gh_proxy}raw.githubusercontent.com/cenet999/sh/main/renzhe.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
+	local sh_v_new=$(curl -s --max-time 15 -r 0-200 ${gh_proxy}raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
 
 	if [ -z "$sh_v_new" ]; then
 		echo -e "${gl_hong}无法获取最新版本信息，请检查网络连接${gl_bai}"
@@ -22204,11 +22238,7 @@ while true; do
 			clear
 			local country=$(curl -s --max-time 5 ipinfo.io/country)
 			local download_url
-			if [ "$country" = "CN" ]; then
-				download_url="${gh_proxy}raw.githubusercontent.com/cenet999/sh/main/cn/renzhe.sh"
-			else
-				download_url="${gh_proxy}raw.githubusercontent.com/cenet999/sh/main/renzhe.sh"
-			fi
+			download_url="${gh_proxy}raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh"
 
 			# 备份当前脚本
 			cp -f ~/renzhe.sh ~/renzhe.sh.bak 2>/dev/null
@@ -22225,6 +22255,8 @@ while true; do
 				yinsiyuanquan2
 				cp -f ~/renzhe.sh /usr/local/bin/r > /dev/null 2>&1
 				ln -sf /usr/local/bin/r /usr/bin/r > /dev/null 2>&1
+				cp -f ~/renzhe.sh /usr/local/bin/R > /dev/null 2>&1
+				ln -sf /usr/local/bin/R /usr/bin/R > /dev/null 2>&1
 				echo -e "${gl_lv}脚本已更新到最新版本！${gl_huang}v$sh_v_new${gl_bai}"
 				send_stats "脚本已经最新$sh_v_new"
 			else
@@ -22257,7 +22289,7 @@ while true; do
 			fi
 
 			# 构建健壮的自动更新命令：下载到临时文件 → 校验 → 备份 → 替换 → 恢复本地设置 → 部署
-			SH_Update_task="cd ~ && tmp=\$(mktemp ~/kejilion_tmp.XXXXXX) && curl -sS --max-time 60 --fail -o \"\$tmp\" ${cron_proxy}raw.githubusercontent.com/cenet999/sh/main/renzhe.sh && [ -s \"\$tmp\" ] && head -1 \"\$tmp\" | grep -q '^#!/bin/bash' && cp -f ~/renzhe.sh ~/renzhe.sh.bak 2>/dev/null && chmod +x \"\$tmp\" && mv -f \"\$tmp\" ~/renzhe.sh"
+			SH_Update_task="cd ~ && tmp=\$(mktemp ~/kejilion_tmp.XXXXXX) && curl -sS --max-time 60 --fail -o \"\$tmp\" ${cron_proxy}raw.githubusercontent.com/3bDjrvHs50kiZIJb5/renzheSH/main/renzhe.sh && [ -s \"\$tmp\" ] && head -1 \"\$tmp\" | grep -q '^#!/bin/bash' && cp -f ~/renzhe.sh ~/renzhe.sh.bak 2>/dev/null && chmod +x \"\$tmp\" && mv -f \"\$tmp\" ~/renzhe.sh"
 			# 追加设置恢复
 			if [ -n "$cron_sed_cmd" ]; then
 				SH_Update_task="$SH_Update_task && $cron_sed_cmd"
@@ -22265,7 +22297,7 @@ while true; do
 			# 从旧脚本恢复 permission_granted 和 ENABLE_STATS 设置
 			SH_Update_task="$SH_Update_task && grep -q 'permission_granted=\"true\"' ~/renzhe.sh.bak 2>/dev/null && sed -i 's/permission_granted=\"false\"/permission_granted=\"true\"/' ~/renzhe.sh; grep -q 'ENABLE_STATS=\"false\"' ~/renzhe.sh.bak 2>/dev/null && sed -i 's/ENABLE_STATS=\"true\"/ENABLE_STATS=\"false\"/' ~/renzhe.sh"
 			# 部署到 /usr/local/bin/r 和 /usr/bin/r
-			SH_Update_task="$SH_Update_task; cp -f ~/renzhe.sh /usr/local/bin/r 2>/dev/null; ln -sf /usr/local/bin/r /usr/bin/r 2>/dev/null"
+			SH_Update_task="$SH_Update_task; cp -f ~/renzhe.sh /usr/local/bin/r 2>/dev/null; ln -sf /usr/local/bin/r /usr/bin/r 2>/dev/null; cp -f ~/renzhe.sh /usr/local/bin/R 2>/dev/null; ln -sf /usr/local/bin/R /usr/bin/R 2>/dev/null"
 			# 下载失败时清理临时文件
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
 
@@ -22297,12 +22329,10 @@ kejilion() {
 cd ~
 while true; do
 clear
-echo -e "${gl_kjlan}"
-echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
-echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
-echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
-echo -e "kejilion 根菜单 v$sh_v"
-echo -e "命令行输入${gl_huang}r${gl_kjlan}可快速启动根菜单${gl_bai}"
+echo -e "${gl_kjlan}忍者${gl_bai}"
+echo -e "${gl_kjlan}RENZHE.SH${gl_bai}"
+echo -e "忍者 根菜单 v$sh_v"
+echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动忍者根菜单${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统更新"
 echo -e "${gl_kjlan}2.   ${gl_bai}Nginx静态应用站"
@@ -22313,14 +22343,12 @@ echo -e "${gl_kjlan}6.   ${gl_bai}CodeX CLI(API)"
 echo -e "${gl_kjlan}7.   ${gl_bai}V2Ray-Agent安装脚本"
 echo -e "${gl_kjlan}8.   ${gl_bai}旧的菜单"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
-echo -e "${gl_kjlan}00.  ${gl_bai}脚本更新"
-echo -e "${gl_kjlan}------------------------${gl_bai}"
-echo -e "${gl_kjlan}0.   ${gl_bai}退出脚本"
-echo -e "${gl_kjlan}------------------------${gl_bai}"
+	echo -e "${gl_kjlan}0.   ${gl_bai}退出脚本"
+	echo -e "${gl_kjlan}------------------------${gl_bai}"
 read -e -p "请输入你的选择: " choice
 
 case $choice in
-  1) clear ; send_stats "系统更新" ; linux_update ;;
+  1) clear ; send_stats "系统更新" ; kejilion_auto_update ; linux_update ;;
   2) linux_panel 118 ;;
   3) ldnmp_Proxy ;;
   4) ldnmp_Proxy "" "" "" "no_ssl" ;;
@@ -22328,7 +22356,6 @@ case $choice in
   6) codex_cli_menu ;;
   7) v2ray_agent_install ;;
   8) kejilion_legacy_menu ;;
-  00) kejilion_update ;;
   0) clear ; exit ;;
   *) echo "无效的输入!" ; break_end ;;
 esac
@@ -22349,7 +22376,7 @@ echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
 echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
 echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "忍者工具箱旧菜单 v$sh_v"
-echo -e "命令行输入${gl_huang}k${gl_kjlan}可快速启动旧菜单${gl_bai}"
+echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动旧菜单${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统信息查询"
 echo -e "${gl_kjlan}2.   ${gl_bai}系统更新"
@@ -22367,8 +22394,6 @@ echo -e "${gl_kjlan}13.  ${gl_bai}系统工具"
 echo -e "${gl_kjlan}14.  ${gl_bai}服务器集群控制"
 echo -e "${gl_kjlan}15.  ${gl_bai}广告专栏"
 echo -e "${gl_kjlan}16.  ${gl_bai}游戏开服脚本合集"
-echo -e "${gl_kjlan}------------------------${gl_bai}"
-echo -e "${gl_kjlan}00.  ${gl_bai}脚本更新"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}0.   ${gl_bai}返回根菜单"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -22393,7 +22418,6 @@ case $choice in
   14) linux_cluster ;;
   15) kejilion_Affiliates ;;
   16) games_server_tools ;;
-  00) kejilion_update ;;
   0) return ;;
   *) echo "无效的输入!" ;;
 esac
@@ -22694,60 +22718,60 @@ codex_cli_launch() {
 }
 
 
-k_info() {
-send_stats "k命令参考用例"
+r_info() {
+send_stats "r命令参考用例"
 echo "-------------------"
 echo "视频介绍: https://www.bilibili.com/video/BV1ib421E7it?t=0.1"
-echo "以下是k命令参考用例："
-echo "启动脚本            k"
-echo "安装软件包          k install nano wget | k add nano wget | k 安装 nano wget"
-echo "卸载软件包          k remove nano wget | k del nano wget | k uninstall nano wget | k 卸载 nano wget"
-echo "更新系统            k update | k 更新"
-echo "清理系统垃圾        k clean | k 清理"
-echo "重装系统面板        k dd | k 重装"
-echo "bbr3控制面板        k bbr3 | k bbrv3"
-echo "内核调优面板        k nhyh | k 内核优化"
-echo "设置虚拟内存        k swap 2048"
-echo "设置虚拟时区        k time Asia/Shanghai | k 时区 Asia/Shanghai"
-echo "系统回收站          k trash | k hsz | k 回收站"
-echo "系统备份功能        k backup | k bf | k 备份"
-echo "ssh远程连接工具     k ssh | k 远程连接"
-echo "rsync远程同步工具   k rsync | k 远程同步"
-echo "硬盘管理工具        k disk | k 硬盘管理"
-echo "内网穿透（服务端）  k frps"
-echo "内网穿透（客户端）  k frpc"
-echo "软件启动            k start sshd | k 启动 sshd "
-echo "软件停止            k stop sshd | k 停止 sshd "
-echo "软件重启            k restart sshd | k 重启 sshd "
-echo "软件状态查看        k status sshd | k 状态 sshd "
-echo "软件开机启动        k enable docker | k autostart docke | k 开机启动 docker "
-echo "域名证书申请        k ssl"
-echo "域名证书到期查询    k ssl ps"
-echo "docker管理平面      k docker"
-echo "docker环境安装      k docker install |k docker 安装"
-echo "docker容器管理      k docker ps |k docker 容器"
-echo "docker镜像管理      k docker img |k docker 镜像"
-echo "LDNMP站点管理       k web"
-echo "LDNMP缓存清理       k web cache"
-echo "安装WordPress       k wp |k wordpress |k wp xxx.com"
-echo "安装反向代理        k fd |k rp |k 反代 |k fd xxx.com"
-echo "安装反代无SSL       k fd-nossl |k rp-nossl |k fd xxx.com 127.0.0.1 3000 no_ssl"
-echo "安装负载均衡        k loadbalance |k 负载均衡"
-echo "安装L4负载均衡      k stream |k L4负载均衡"
-echo "防火墙面板          k fhq |k 防火墙"
-echo "开放端口            k dkdk 8080 |k 打开端口 8080"
-echo "关闭端口            k gbdk 7800 |k 关闭端口 7800"
-echo "放行IP              k fxip 127.0.0.0/8 |k 放行IP 127.0.0.0/8"
-echo "阻止IP              k zzip 177.5.25.36 |k 阻止IP 177.5.25.36"
-echo "命令收藏夹          k fav | k 命令收藏夹"
-echo "应用市场管理        k app"
-echo "应用编号快捷管理    k app 26 | k app 1panel | k app npm"
-echo "CodeX CLI菜单       k r"
-echo "fail2ban管理        k fail2ban | k f2b"
-echo "显示系统信息        k info"
-echo "ROOT密钥管理        k sshkey"
-echo "SSH公钥导入(URL)    k sshkey <url>"
-echo "SSH公钥导入(GitHub) k sshkey github <user> "
+echo "以下是r命令参考用例："
+echo "启动脚本            r / R"
+echo "安装软件包          r install nano wget | r add nano wget | r 安装 nano wget"
+echo "卸载软件包          r remove nano wget | r del nano wget | r uninstall nano wget | r 卸载 nano wget"
+echo "更新系统            r update | r 更新"
+echo "清理系统垃圾        r clean | r 清理"
+echo "重装系统面板        r dd | r 重装"
+echo "bbr3控制面板        r bbr3 | r bbrv3"
+echo "内核调优面板        r nhyh | r 内核优化"
+echo "设置虚拟内存        r swap 2048"
+echo "设置虚拟时区        r time Asia/Shanghai | r 时区 Asia/Shanghai"
+echo "系统回收站          r trash | r hsz | r 回收站"
+echo "系统备份功能        r backup | r bf | r 备份"
+echo "ssh远程连接工具     r ssh | r 远程连接"
+echo "rsync远程同步工具   r rsync | r 远程同步"
+echo "硬盘管理工具        r disk | r 硬盘管理"
+echo "内网穿透（服务端）  r frps"
+echo "内网穿透（客户端）  r frpc"
+echo "软件启动            r start sshd | r 启动 sshd "
+echo "软件停止            r stop sshd | r 停止 sshd "
+echo "软件重启            r restart sshd | r 重启 sshd "
+echo "软件状态查看        r status sshd | r 状态 sshd "
+echo "软件开机启动        r enable docker | r autostart docke | r 开机启动 docker "
+echo "域名证书申请        r ssl"
+echo "域名证书到期查询    r ssl ps"
+echo "docker管理平面      r docker"
+echo "docker环境安装      r docker install |r docker 安装"
+echo "docker容器管理      r docker ps |r docker 容器"
+echo "docker镜像管理      r docker img |r docker 镜像"
+echo "LDNMP站点管理       r web"
+echo "LDNMP缓存清理       r web cache"
+echo "安装WordPress       r wp |r wordpress |r wp xxx.com"
+echo "安装反向代理        r fd |r rp |r 反代 |r fd xxx.com"
+echo "安装反代无SSL       r fd-nossl |r rp-nossl |r fd xxx.com 127.0.0.1 3000 no_ssl"
+echo "安装负载均衡        r loadbalance |r 负载均衡"
+echo "安装L4负载均衡      r stream |r L4负载均衡"
+echo "防火墙面板          r fhq |r 防火墙"
+echo "开放端口            r dkdk 8080 |r 打开端口 8080"
+echo "关闭端口            r gbdk 7800 |r 关闭端口 7800"
+echo "放行IP              r fxip 127.0.0.0/8 |r 放行IP 127.0.0.0/8"
+echo "阻止IP              r zzip 177.5.25.36 |r 阻止IP 177.5.25.36"
+echo "命令收藏夹          r fav | r 命令收藏夹"
+echo "应用市场管理        r app"
+echo "应用编号快捷管理    r app 26 | r app 1panel | r app npm"
+echo "CodeX CLI菜单       r codex"
+echo "fail2ban管理        r fail2ban | r f2b"
+echo "显示系统信息        r info"
+echo "ROOT密钥管理        r sshkey"
+echo "SSH公钥导入(URL)    r sshkey <url>"
+echo "SSH公钥导入(GitHub) r sshkey github <user> "
 
 }
 
@@ -22943,7 +22967,7 @@ else
 				add_ssl "$1"
 				send_stats "快速申请证书"
 			else
-				k_info
+				r_info
 			fi
 			;;
 
@@ -22979,7 +23003,7 @@ else
 			elif [ -z "$1" ]; then
 				ldnmp_web_status
 			else
-				k_info
+				r_info
 			fi
 			;;
 
@@ -23032,16 +23056,16 @@ else
 				* )
 					echo "错误：未知参数 '$1'"
 					echo "用法："
-					echo "  k sshkey                  进入交互菜单"
-					echo "  k sshkey \"<pubkey>\"     直接导入 SSH 公钥"
-					echo "  k sshkey <url>            从 URL 导入 SSH 公钥"
-					echo "  k sshkey github <user>    从 GitHub 导入 SSH 公钥"
+					echo "  r sshkey                  进入交互菜单"
+					echo "  r sshkey \"<pubkey>\"     直接导入 SSH 公钥"
+					echo "  r sshkey <url>            从 URL 导入 SSH 公钥"
+					echo "  r sshkey github <user>    从 GitHub 导入 SSH 公钥"
 					;;
 			esac
 
 			;;
 		*)
-			k_info
+			r_info
 			;;
 	esac
 fi
