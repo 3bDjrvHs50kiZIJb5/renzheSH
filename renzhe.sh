@@ -3961,7 +3961,7 @@ ldnmp_web_status() {
 		  if grep -q "ssl_certificate" "$conf_file"; then
 			continue
 		  fi
-		  restore_domain_filename "$(basename "$conf_file" .conf)"
+			  echo "$(restore_domain_filename "$(basename "$conf_file" .conf)")"
 		done
 
 		for conf_file in /home/web/conf.d/*.conf; do
@@ -3978,7 +3978,7 @@ ldnmp_web_status() {
 		  fi
 
 		  if ! grep -q "ssl_certificate" "$conf_file"; then
-			restore_domain_filename "$(basename "$conf_file" .conf)"
+				echo "$(restore_domain_filename "$(basename "$conf_file" .conf)")"
 		  fi
 		done
 
@@ -22344,6 +22344,7 @@ echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快�
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统更新"
 echo -e "${gl_kjlan}2.   ${gl_bai}Nginx静态应用站"
+echo -e "${gl_kjlan}31.  ${gl_bai}站点数据管理 ${gl_huang}★${gl_bai}"
 echo -e "${gl_kjlan}3.   ${gl_bai}站点反向代理，IP加端口"
 echo -e "${gl_kjlan}4.   ${gl_bai}站点反向代理，IP加端口，无SSL"
 echo -e "${gl_kjlan}5.   ${gl_bai}应用市场"
@@ -22358,6 +22359,7 @@ read -e -p "请输入你的选择: " choice
 case $choice in
   1) kejilion_system_update_auto ;;
   2) linux_panel 118 ;;
+  31) ldnmp_web_status ;;
   3) ldnmp_Proxy ;;
   4) ldnmp_Proxy "" "" "" "no_ssl" ;;
   5) linux_panel ;;
