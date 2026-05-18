@@ -1872,15 +1872,18 @@ web_cache() {
 web_del() {
 
 	send_stats "删除站点数据"
-	yuming_list="${1:-}"
-	if [ -z "$yuming_list" ]; then
-		read -e -p "删除站点数据，请输入你的域名（多个域名用空格隔开）: " yuming_list
-		if [[ -z "$yuming_list" ]]; then
-			return
-		fi
+	local yuming_input="${1:-}"
+	local yuming_list=()
+
+	if [ -z "$yuming_input" ]; then
+		yuming_input="$(read_batch_yuming "删除站点数据，请输入你的域名（支持空格或换行分隔，输入空行结束）: ")"
+		[ -z "$yuming_input" ] && return
 	fi
 
-	for yuming in $yuming_list; do
+	mapfile -t yuming_list < <(normalize_yuming_list "$yuming_input")
+	[ ${#yuming_list[@]} -eq 0 ] && return
+
+	for yuming in "${yuming_list[@]}"; do
 		echo "正在删除域名: $yuming"
 		local storage_name
 		storage_name=$(get_domain_storage_name "$yuming")
