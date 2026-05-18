@@ -22340,7 +22340,7 @@ clear
 echo -e "${gl_kjlan}忍者${gl_bai}"
 echo -e "${gl_kjlan}RENZHE.SH${gl_bai}"
 echo -e "忍者 根菜单 V$(date '+%m.%d.%Y %H')"
-echo -e "命令行输入${gl_huang}r${gl_kjlan}可快速启动忍者根菜单，${gl_huang}R${gl_kjlan}可直接进入系统更新${gl_bai}"
+echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动忍者根菜单，并自动更新脚本和系统${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统更新"
 echo -e "${gl_kjlan}2.   ${gl_bai}Nginx静态应用站"
@@ -22384,7 +22384,7 @@ echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
 echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
 echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "忍者工具箱旧菜单 v$sh_v"
-echo -e "命令行输入${gl_huang}r${gl_kjlan}可快速启动旧菜单，${gl_huang}R${gl_kjlan}可直接进入系统更新${gl_bai}"
+echo -e "命令行输入${gl_huang}r${gl_kjlan} / ${gl_huang}R${gl_kjlan}可快速启动旧菜单，并自动更新脚本和系统${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系统信息查询"
 echo -e "${gl_kjlan}2.   ${gl_bai}系统更新"
@@ -22554,8 +22554,9 @@ install_nodejs_and_npm() {
 			echo "安装 Node.js 需要 root 权限或 sudo。"
 			return 1
 		fi
-		apt update -y
-		apt install -y nodejs npm
+		DEBIAN_FRONTEND=noninteractive apt-get update -y
+		DEBIAN_FRONTEND=noninteractive apt-get purge -y npm >/dev/null 2>&1 || true
+		DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
 	elif command -v apk >/dev/null 2>&1; then
 		apk update
 		apk add nodejs npm
@@ -22851,12 +22852,9 @@ echo "SSH公钥导入(GitHub) r sshkey github <user> "
 
 
 if [ "$#" -eq 0 ]; then
-	# 如果没有参数，运行交互式逻辑
-	if [ "$(basename "$0")" = "R" ]; then
-		kejilion_system_update_auto
-	else
-		kejilion
-	fi
+	# 如果没有参数，先自动更新脚本和系统，再进入交互式菜单
+	kejilion_system_update_auto
+	kejilion
 else
 	# 如果有参数，执行相应函数
 	case $1 in
