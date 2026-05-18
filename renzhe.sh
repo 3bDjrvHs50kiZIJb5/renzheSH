@@ -94,7 +94,9 @@ yinsiyuanquan2
 sed -i '/^alias r=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias r=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias r=/d' ~/.bash_profile > /dev/null 2>&1
-cp -f ./renzhe.sh ~/renzhe.sh > /dev/null 2>&1
+# 始终从当前执行中的脚本源复制，避免被当前目录里旧的 renzhe.sh 覆盖
+script_source="${BASH_SOURCE[0]}"
+cp -f "$script_source" ~/renzhe.sh > /dev/null 2>&1
 cp -f ~/renzhe.sh /usr/local/bin/r > /dev/null 2>&1
 ln -sf /usr/local/bin/r /usr/bin/r > /dev/null 2>&1
 cp -f ~/renzhe.sh /usr/local/bin/R > /dev/null 2>&1
