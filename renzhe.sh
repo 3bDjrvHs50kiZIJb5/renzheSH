@@ -22754,8 +22754,7 @@ codex_cli_config_api_mode() {
 	read -e -p "Reasoning Effort [${reasoning}]: " input_reasoning
 	reasoning="${input_reasoning:-$reasoning}"
 
-	read -s -p "OpenAI API Key（回车保留现有）: " api_key
-	echo ""
+	read -e -p "OpenAI API Key（回车保留现有）: " api_key
 
 	codex_cli_update_config_file "$provider_name" "$base_url" "$model" "$reasoning"
 
